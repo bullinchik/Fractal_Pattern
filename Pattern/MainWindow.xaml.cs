@@ -21,31 +21,30 @@ namespace Pattern
 
         private void ButtonBase_OnClick_Save(object sender, RoutedEventArgs e)
         {
-            SaveFileDialog saveFileDialog = new SaveFileDialog();
-            saveFileDialog.Filter = "Image (.jpg)|*.jpg";
-            saveFileDialog.InitialDirectory = @"c:\temp\";
-            Rect bounds = VisualTreeHelper.GetDescendantBounds(Canvas);
-            double dpi = 96d;
+            SaveFileDialog SavePatternDiaolog = new SaveFileDialog();
+            SavePatternDiaolog.Filter = "Image (.jpg)|*.jpg";
+            SavePatternDiaolog.InitialDirectory = @"c:\temp\";
+            Rect boundsOfCanvas = VisualTreeHelper.GetDescendantBounds(Canvas);
+            double DPItoSave = 150d;
 
-            RenderTargetBitmap rtb = new RenderTargetBitmap((int) bounds.Width, (int) bounds.Height, dpi, dpi,
-                System.Windows.Media.PixelFormats.Default);
+            RenderTargetBitmap RenderBitmapFromCanvas = new RenderTargetBitmap((int) boundsOfCanvas.Width, (int) boundsOfCanvas.Height, DPItoSave, DPItoSave, PixelFormats.Default);
 
-            DrawingVisual dv = new DrawingVisual();
-            using (DrawingContext dc = dv.RenderOpen())
+            DrawingVisual VisualToRenderAndSave = new DrawingVisual();
+            using (DrawingContext DrawingFromCanvas = VisualToRenderAndSave.RenderOpen())
             {
-                VisualBrush vb = new VisualBrush(Canvas);
-                dc.DrawRectangle(vb, null, new Rect(new Point(), bounds.Size));
+                VisualBrush BrushForBitMap = new VisualBrush(Canvas);
+                DrawingFromCanvas.DrawRectangle(BrushForBitMap, null, new Rect(new Point(), boundsOfCanvas.Size));
             }
 
-            rtb.Render(dv);
-            PngBitmapEncoder png = new PngBitmapEncoder();
+            RenderBitmapFromCanvas.Render(VisualToRenderAndSave);
+            PngBitmapEncoder EncoderPNG = new PngBitmapEncoder();
 
-            png.Frames.Add(BitmapFrame.Create(rtb));
-            if (saveFileDialog.ShowDialog() == true)
+            EncoderPNG.Frames.Add(BitmapFrame.Create(RenderBitmapFromCanvas));
+            if (SavePatternDiaolog.ShowDialog() == true)
             {
-                Stream stream = File.Create(saveFileDialog.FileName);
-                png.Save(stream);
-                stream.Close();
+                Stream saveCanvasStram = File.Create(SavePatternDiaolog.FileName);
+                EncoderPNG.Save(saveCanvasStram);
+                saveCanvasStram.Close();
             }
         }
         private void ButtonBase_OnClick_Draw(object sender, RoutedEventArgs e)
