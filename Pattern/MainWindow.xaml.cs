@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Net;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -19,103 +18,105 @@ namespace Pattern
         {
             InitializeComponent();
         }
-         private void ButtonBase_OnClick_Save(object sender, RoutedEventArgs e)
-         {
-             SaveFileDialog saveFileDialog = new SaveFileDialog();
-             saveFileDialog.Filter = "Image (.jpg)|*.jpg";
-             saveFileDialog.InitialDirectory = @"c:\temp\";
-             Rect bounds = VisualTreeHelper.GetDescendantBounds(Canvas);
-             double dpi = 96d;
 
-             RenderTargetBitmap rtb = new RenderTargetBitmap((int)bounds.Width, (int)bounds.Height, dpi, dpi, System.Windows.Media.PixelFormats.Default);
-
-             DrawingVisual dv = new DrawingVisual();
-             using (DrawingContext dc = dv.RenderOpen())
-             {
-                 VisualBrush vb = new VisualBrush(Canvas);
-                 dc.DrawRectangle(vb, null, new Rect(new Point(), bounds.Size));
-             }
-
-             rtb.Render(dv);
-             PngBitmapEncoder png = new PngBitmapEncoder();
-
-             png.Frames.Add(BitmapFrame.Create(rtb));
-             if (saveFileDialog.ShowDialog() == true)
-             {
-                 Stream stream = File.Create(saveFileDialog.FileName);
-                 png.Save(stream);
-                 stream.Close();
-             }
-         }
-         
-         
-
-         private void ButtonBase_OnClick_Draw(object sender, RoutedEventArgs e)
+        private void ButtonBase_OnClick_Save(object sender, RoutedEventArgs e)
         {
-            if ( IsNumber(FirstKey.Text) )
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Filter = "Image (.jpg)|*.jpg";
+            saveFileDialog.InitialDirectory = @"c:\temp\";
+            Rect bounds = VisualTreeHelper.GetDescendantBounds(Canvas);
+            double dpi = 96d;
+
+            RenderTargetBitmap rtb = new RenderTargetBitmap((int) bounds.Width, (int) bounds.Height, dpi, dpi,
+                System.Windows.Media.PixelFormats.Default);
+
+            DrawingVisual dv = new DrawingVisual();
+            using (DrawingContext dc = dv.RenderOpen())
             {
-                int firstKeySideLeft = Convert.ToInt32(FirstKey.Text);
-                int secondKeySideTop = GenerateSecondKey(firstKeySideLeft);
-                if (firstKeySideLeft > 69 || firstKeySideLeft < 3)
-                {
-                    MessageBox.Show("Число не должно быть меньше трех или больше 70");
-                    FirstKey.Text = "";
-                }
-                else
-                {
-                    firstKeySideLeft *= 5;
-                    secondKeySideTop *= 5;
-                    DrawPattern(firstKeySideLeft, secondKeySideTop);
-                }
+                VisualBrush vb = new VisualBrush(Canvas);
+                dc.DrawRectangle(vb, null, new Rect(new Point(), bounds.Size));
             }
-            else
+
+            rtb.Render(dv);
+            PngBitmapEncoder png = new PngBitmapEncoder();
+
+            png.Frames.Add(BitmapFrame.Create(rtb));
+            if (saveFileDialog.ShowDialog() == true)
             {
-                FirstKey.Text = "";
+                Stream stream = File.Create(saveFileDialog.FileName);
+                png.Save(stream);
+                stream.Close();
             }
+        }
+        private void ButtonBase_OnClick_Draw(object sender, RoutedEventArgs e)
+        {
+           if ( IsNumber(FirstKey.Text) )
+           {
+               int firstKeySideLeft = Convert.ToInt32(FirstKey.Text);
+               int secondKeySideTop = GenerateSecondKey(firstKeySideLeft);
+               const int MaxAreaSize = 69, MinAreaSize = 3;
+               if (firstKeySideLeft < MinAreaSize || MaxAreaSize < firstKeySideLeft)
+               {
+                   MessageBox.Show("Число не должно быть меньше трех или больше 70");
+                   FirstKey.Text = "";
+               }
+               else
+               {
+                   firstKeySideLeft *= 5;
+                   secondKeySideTop *= 5;
+                   DrawPattern(firstKeySideLeft, secondKeySideTop);
+               }
+           }
+           else
+           {
+               FirstKey.Text = "";
+           }
         }
 
         [SuppressMessage("ReSharper.DPA", "DPA0003: Excessive memory allocations in LOH", MessageId = "type: FreezableContextPair[]; size: 9449MB")]
-        private void DrawPattern(int Height, int Width)
+        private void DrawPattern(int height, int width)
         {
             Canvas.Children.Clear();
-            DrawRectAngel(Width, Height);
+            DrawRectAngel(width, height);
             
-            int stepHorizontal = 5, stepVertical = 5, horizontal = 0, vertical = 0;
-            bool offset = false;
+            int HorizontalIterator = 5, 
+                VerticalIterator = 5, 
+                horizontalStartPositionToDraw = 0, 
+                verticalStartPositionToDraw = 0;
+            bool isDraw = false;
             
-            
-            DrawLine(vertical, stepVertical, horizontal, stepHorizontal);
+            DrawLine(verticalStartPositionToDraw, VerticalIterator, horizontalStartPositionToDraw, HorizontalIterator);
            
-            horizontal += stepHorizontal;
-            vertical += stepVertical; 
-            
+            horizontalStartPositionToDraw += HorizontalIterator;
+            verticalStartPositionToDraw += VerticalIterator; 
             
             do
             {
-                horizontal += stepHorizontal;
-                vertical += stepVertical;
+                horizontalStartPositionToDraw += HorizontalIterator;
+                verticalStartPositionToDraw += VerticalIterator;
 
-                if (horizontal  >= Width || horizontal <= 0)
+                if ( horizontalStartPositionToDraw <= 0 || width <= horizontalStartPositionToDraw )
                 {
-                    stepHorizontal *= (-1);
+                    HorizontalIterator *= -1;
                 }
 
-                if (vertical >= Height || vertical <= 0)
+                if ( verticalStartPositionToDraw <= 0 ||  height < verticalStartPositionToDraw  )
                 {
-                    stepVertical *= (-1);
+                    VerticalIterator *= -1;
                 }
-                offset = !offset;
-                if (offset)
+                isDraw = !isDraw;
+                if (isDraw)
                 {
-                    DrawLine(vertical, stepVertical, horizontal, stepHorizontal);
+                    DrawLine(verticalStartPositionToDraw, VerticalIterator, horizontalStartPositionToDraw, HorizontalIterator);
                 }
                 
-            } while (InNotCorner(horizontal, vertical, Width, Height));
+            } while (NotInCorner(horizontalStartPositionToDraw, verticalStartPositionToDraw, width, height));
         }
+        
         [SuppressMessage("ReSharper.DPA", "DPA0002: Excessive memory allocations in SOH", MessageId = "type: FreezableContextPair[]")]
         private void DrawLine(int vertical, int stepVertical,int horizontal, int stepHorizontal )
         {
-            Line  NewLine = new Line()
+            Line  newLine = new Line()
             {
                 X1 = horizontal,
                 X2 = horizontal + stepHorizontal,
@@ -124,7 +125,7 @@ namespace Pattern
                 StrokeThickness = 2,
                 Stroke = ColorPicker.Brush
             };
-            Canvas.Children.Add(NewLine);
+            Canvas.Children.Add(newLine);
         }
 
         private void DrawRectAngel(int Width, int Height)
@@ -138,21 +139,20 @@ namespace Pattern
             
             Canvas.Children.Add(border);
         }
-
-
-        private bool InNotCorner(int xx, int yy, int Width, int Height)
+        
+        private bool NotInCorner(int Horizontal, int Vetical, int Width, int Height)
         {
-            return !((xx == 0 && yy == 0) || 
-                   (xx == Width && yy == 0) || 
-                   (xx == Width && yy == Height) ||
-                   (xx == 0 && yy == Height));
+            return !((Horizontal == 0 && Vetical == 0) || 
+                   (Horizontal == Width && Vetical == 0) || 
+                   (Horizontal == Width && Vetical == Height) ||
+                   (Horizontal == 0 && Vetical == Height));
         }
 
         private bool IsNumber(string String)
-        {
-            try
+        { 
+            try 
             { 
-                Convert.ToInt32( String );
+                Convert.ToInt32(String);
             }
             catch (FormatException)
             {
@@ -164,16 +164,17 @@ namespace Pattern
 
         private int GenerateSecondKey(int firstKey)
         {
-            int secondKey = firstKey * 16 / 10 ;
-            while( IsDigit(secondKey) )
+            int secondKey = firstKey * 16 / 10;
+            while(IsDigit(secondKey))
             {
-                secondKey ++;
+                secondKey++;
             }
             return secondKey;
         }
-        private bool IsDigit( int secondKey)
+        
+        private bool IsDigit(int secondKey)
         {
-            for (int i = 2; i < secondKey; i++)
+            for (int i=2; i < secondKey; i++)
             {
                 if (secondKey % i == 0)
                 {
